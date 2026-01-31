@@ -1,0 +1,1387 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>80 причин кончить</title>
+    <style>
+        /* Сброс и базовые стили */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #141414;
+            --text-primary: #f0f0f0;
+            --text-secondary: #b0b0b0;
+            --accent: #ff6b8b;
+            --accent-dark: #d44d6e;
+            --transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(120, 119, 198, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(255, 107, 139, 0.03) 0%, transparent 50%);
+        }
+
+        /* Контейнер для всей галереи */
+        .gallery-container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Счетчик */
+        .counter {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            z-index: 1000;
+            font-size: 1.2rem;
+            background: rgba(20, 20, 20, 0.8);
+            padding: 10px 20px;
+            border-radius: 50px;
+            border: 1px solid rgba(255, 107, 139, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .counter .current {
+            color: var(--accent);
+            font-weight: 600;
+            font-size: 1.5rem;
+        }
+
+        /* Карточка персонажа (активная) */
+        .character-card {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            width: 90%;
+            max-width: 800px;
+            opacity: 0;
+            transition: var(--transition);
+            pointer-events: none;
+        }
+
+        .character-card.active {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+            pointer-events: all;
+        }
+
+        .character-card.previous {
+            opacity: 0;
+            transform: translate(-150%, -50%) scale(0.7);
+        }
+
+        .character-card.next {
+            opacity: 0;
+            transform: translate(50%, -50%) scale(0.7);
+        }
+
+        /* Изображение */
+        .character-image {
+            width: 100%;
+            height: 60vh;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+
+        .character-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .character-card.active:hover .character-image img {
+            transform: scale(1.03);
+        }
+
+        .image-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60%;
+            background: linear-gradient(to top, rgba(10, 10, 10, 0.95) 20%, transparent);
+            border-radius: 20px;
+        }
+
+        /* Информация о персонаже */
+        .character-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 40px;
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.8s ease 0.3s;
+        }
+
+        .character-card.active .character-info {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .character-name {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #fff, var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            line-height: 1;
+        }
+
+        .character-source {
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .character-comment {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            max-width: 600px;
+            color: rgba(255, 255, 255, 0.9);
+            background: rgba(20, 20, 20, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid var(--accent);
+            backdrop-filter: blur(10px);
+        }
+
+        /* Кнопки навигации */
+        .nav-buttons {
+            position: fixed;
+            bottom: 40px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            z-index: 1000;
+        }
+
+        .nav-btn {
+            background: rgba(20, 20, 20, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: var(--transition);
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-btn:hover {
+            background: var(--accent);
+            transform: scale(1.1);
+            border-color: var(--accent);
+        }
+
+        .nav-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Прогресс-бар */
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.05);
+            z-index: 1001;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), #b167ff);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .character-name {
+                font-size: 2.5rem;
+            }
+            
+            .character-source {
+                font-size: 1.2rem;
+            }
+            
+            .character-comment {
+                font-size: 1rem;
+                padding: 15px;
+            }
+            
+            .character-info {
+                padding: 20px;
+            }
+            
+            .character-image {
+                height: 50vh;
+            }
+            
+            .counter {
+                top: 20px;
+                right: 20px;
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .character-name {
+                font-size: 2rem;
+            }
+            
+            .nav-buttons {
+                bottom: 20px;
+            }
+            
+            .nav-btn {
+                width: 45px;
+                height: 45px;
+            }
+        }
+
+        /* Анимация появления для первого персонажа */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .character-card.active:first-child {
+            animation: fadeIn 1s ease-out;
+        }
+        /* Главный экран */
+.start-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background: var(--bg-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    transition: opacity 0.8s ease, transform 0.8s ease;
+    background-image: 
+        radial-gradient(circle at 20% 30%, rgba(255, 107, 139, 0.1) 0%, transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(120, 119, 198, 0.1) 0%, transparent 40%);
+}
+
+.start-screen.hidden {
+    opacity: 0;
+    transform: scale(1.1);
+    pointer-events: none;
+}
+
+.start-content {
+    text-align: center;
+    padding: 40px;
+    max-width: 800px;
+    animation: fadeInUp 1s ease-out 0.3s both;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.main-title {
+    font-size: 4rem;
+    font-weight: 800;
+    margin-bottom: 20px;
+    background: linear-gradient(90deg, #ff6b8b, #b167ff, #6b8bff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    line-height: 1.1;
+}
+
+.main-subtitle {
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+    margin-bottom: 60px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.6;
+}
+
+.stats {
+    display: flex;
+    justify-content: center;
+    gap: 60px;
+    margin: 60px 0;
+}
+
+.stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.stat-number {
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-top: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.start-button {
+    background: linear-gradient(90deg, var(--accent), #b167ff);
+    color: white;
+    border: none;
+    padding: 20px 60px;
+    font-size: 1.5rem;
+    font-weight: 600;
+    border-radius: 50px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 20px;
+    transition: all 0.3s ease;
+    margin: 40px auto;
+    box-shadow: 0 10px 30px rgba(255, 107, 139, 0.3);
+}
+
+.start-button:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(255, 107, 139, 0.4);
+    gap: 30px;
+}
+
+.start-button:active {
+    transform: translateY(0);
+}
+
+.start-button .arrow {
+    transition: transform 0.3s ease;
+}
+
+.start-button:hover .arrow {
+    transform: translateX(10px);
+}
+
+.hint {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-top: 30px;
+    opacity: 0.7;
+}
+
+/* Анимации для перехода в разные стороны */
+@keyframes slideOutLeft {
+    from { 
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+    to { 
+        transform: translate(-150%, -50%) scale(0.7);
+        opacity: 0;
+    }
+}
+
+@keyframes slideOutRight {
+    from { 
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+    to { 
+        transform: translate(50%, -50%) scale(0.7);
+        opacity: 0;
+    }
+}
+
+@keyframes slideInFromLeft {
+    from { 
+        transform: translate(-150%, -50%) scale(0.7);
+        opacity: 0;
+    }
+    to { 
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes slideInFromRight {
+    from { 
+        transform: translate(50%, -50%) scale(0.7);
+        opacity: 0;
+    }
+    to { 
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+/* Классы для анимаций */
+.slide-out-left {
+    animation: slideOutLeft 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+.slide-out-right {
+    animation: slideOutRight 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+.slide-in-from-left {
+    animation: slideInFromLeft 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+.slide-in-from-right {
+    animation: slideInFromRight 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+/* Адаптивность для главного экрана */
+@media (max-width: 768px) {
+    .main-title {
+        font-size: 2.5rem;
+    }
+    
+    .main-subtitle {
+        font-size: 1.2rem;
+        padding: 0 20px;
+    }
+    
+    .stats {
+        gap: 30px;
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+    }
+    
+    .start-button {
+        padding: 18px 40px;
+        font-size: 1.2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-title {
+        font-size: 2rem;
+    }
+    
+    .stats {
+        gap: 20px;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+    }
+    
+    .start-button {
+        padding: 16px 30px;
+        font-size: 1.1rem;
+    }
+}
+    </style>
+</head>
+<body>
+    <!-- Главный экран -->
+<div class="start-screen" id="startScreen">
+    <div class="start-content">
+        <h1 class="main-title">одна n-ная часть моих крашуль</h1>
+        <p class="main-subtitle">(кто сука букву У обрезал)</p>
+        <div class="stats">
+            <div class="stat">
+                <span class="stat-number">80</span>
+                <span class="stat-label">персонажей</span>
+            </div>
+            <div class="stat">
+                <span class="stat-number">∞</span>
+                <span class="stat-label">дрочки</span>
+            </div>
+            <div class="stat">
+                <span class="stat-number">1</span>
+                <span class="stat-label">инсульт</span>
+            </div>
+        </div>
+        <button class="start-button" id="startButton">
+            <span>пагна</span>
+            <div class="arrow">→</div>
+        </button>
+        <p class="hint">листать стрелками ← → или свайпами</p>
+    </div>
+</div>
+    <div class="gallery-container" id="galleryContainer">
+       
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        
+       
+        <div class="counter">
+            <span class="current" id="currentNumber">1</span> / <span id="totalNumber">79</span>
+        </div>
+        
+       
+        
+       
+        <div class="nav-buttons">
+            <button class="nav-btn" id="prevBtn">
+                ←
+            </button>
+            <button class="nav-btn" id="nextBtn">
+                →
+            </button>
+        </div>
+    </div>
+
+    <script>
+
+    const characters = [
+            {
+                id: 1,
+                name: "Мадс Миккельсен",
+                source: "Актер",
+                comment: "ДУШИ МЕНЯ МАДС МИККЕЛЬСЕН",
+                image: "assets/character1.jpg" 
+            },
+            {
+                id: 2,
+                name: "Кирилл Чудомирович Флинс",
+                source: "Genshin impact",
+                comment: "джентельмен с кладбища",
+                image: "assets/character2.jpg"
+            },
+            {
+                id: 3,
+                name: "mr. Crawling",
+                source: "Homicipher",
+                comment: "хохотушка три метра ростом",
+                image: "assets/character3.jpg"
+            },
+             {
+                id: 4,
+                name: "Аратака Рейген",
+                source: "Mob psycho 100",
+                comment: "мемный чел чо сказать",
+                image: "assets/character4.jpg"
+            },
+             {
+                id: 5,
+                name: "Игорь Синяк",
+                source: "Медиа",
+                comment: "дива",
+                image: "assets/character5.jpg"
+            },
+             {
+                id: 6,
+                name: "Доктор",
+                source: "The freak circus",
+                comment: "у него хуй здоровый кстати",
+                image: "assets/character6.jpg"
+            },
+             {
+                id: 7,
+                name: "Илья Сатир (Борик)",
+                source: "Медиа",
+                comment: "мега завоз",
+                image: "assets/character7.jpg"
+            },
+             {
+                id: 8,
+                name: "Райан Гослинг",
+                source: "Актер",
+                comment: "прикольный чо",
+                image: "assets/character8.jpg"
+            },
+             {
+                id: 9,
+                name: "Пьеро",
+                source: "The freak circus",
+                comment: "милый тип",
+                image: "assets/character9.jpg"
+            },
+             {
+                id: 10,
+                name: "Майкл",
+                source: "Mushroom oasis",
+                comment: "милый одинокий мальчишка...",
+                image: "assets/character10.jpg"
+            },
+            {
+                id: 11,
+                name: "Рюк",
+                source: "Death note",
+                comment: ";)",
+                image: "assets/character11.jpg"
+            },
+            {
+                id: 12,
+                name: "Хироми Хигурума",
+                source: "Jujutsu kaisen",
+                comment: "одного взгляда хватило чтобы влюбиться в этот нос и томный взгляд",
+                image: "assets/character12.jpg"
+            },
+                {
+                id: 13,
+                name: "О Сану",
+                source: "Killing stalking",
+                comment: "первая манхва, первый маньяк-краш (не считая крипипасту)",
+                image: "assets/character13.jpg"
+            },
+                {
+                id: 14,
+                name: "Коннор",
+                source: "Detroit: become human",
+                comment: "симпатичный собранный мужчина",
+                image: "assets/character14.jpg"
+            },
+                {
+                id: 15,
+                name: "Рассказчик",
+                source: "Fight club",
+                comment: "у меня фетиш на уставшие лица лол",
+                image: "assets/character15.jpg"
+            },
+                {
+                id: 16,
+                name: "какой то мужик",
+                source: "вроде связан с музыкой",
+                comment: "фото с пинтереста, уже очень давно греет мою душу...",
+                image: "assets/character16.jpg"
+            },
+                {
+                id: 17,
+                name: "Джеймс Сандерленд",
+                source: "Silent Hill",
+                comment: "симпотный чо",
+                image: "assets/character17.jpg"
+            },
+                {
+                id: 18,
+                name: "Сэм Портер Бриджес",
+                source: "Death stranding",
+                comment: "уставший мужчина СЮДАААА",
+                image: "assets/character18.jpg"
+            },
+                {
+                id: 19,
+                name: "Хью Дэнси",
+                source: "Актер",
+                comment: "фетиш.??",
+                image: "assets/character19.jpg"
+            },
+                {
+                id: 20,
+                name: "Том Харди",
+                source: "Актер",
+                comment: "души меня, Том",
+                image: "assets/character20.jpg"
+            },
+                {
+                id: 21,
+                name: "Олег Тиньков",
+                source: "Медиа",
+                comment: "<<великая компания. великий предприниматель>>",
+                image: "assets/character21.jpg"
+            },
+                {
+                id: 22,
+                name: "Андрей Гайдулян",
+                source: "Актер",
+                comment: "папа",
+                image: "assets/character22.jpg"
+            },
+                {
+                id: 23,
+                name: "Купитман",
+                source: "Интерны",
+                comment: "угарный",
+                image: "assets/character23.jpg"
+            },
+                {
+                id: 24,
+                name: "Чжун Ли",
+                source: "Genshin impact",
+                comment: "люблю его",
+                image: "assets/character24.jpg"
+            },
+                {
+                id: 25,
+                name: "Галлахер",
+                source: "Honkai: star rail",
+                comment: "фетиш.",
+                image: "assets/character25.jpg"
+            },
+                {
+                id: 26,
+                name: "Маршалл Брюс",
+                source: "Eminem",
+                comment: "молодой ЭМ краш",
+                image: "assets/character26.jpg"
+            },
+                {
+                id: 27,
+                name: "Павел Дуров",
+                source: "Медиа",
+                comment: "вечный прайм",
+                image: "assets/character27.jpg"
+            },
+                {
+                id: 28,
+                name: "Юрий Каплан",
+                source: "Валентин Стрыкало",
+                comment: "обожаю",
+                image: "assets/character28.jpg"
+            },
+                {
+                id: 29,
+                name: "Курт Кобейн",
+                source: "Nirvana",
+                comment: "27/27",
+                image: "assets/character29.jpg"
+            },
+                {
+                id: 30,
+                name: "Том Йорк",
+                source: "Radiohead",
+                comment: "мили",
+                image: "assets/character30.jpg"
+            },
+                {
+                id: 31,
+                name: "Питер Стил",
+                source: "Type o negative",
+                comment: "секс.",
+                image: "assets/character31.jpg"
+            },
+                {
+                id: 32,
+                name: "Капитано",
+                source: "Genshin impact",
+                comment: "люблю..",
+                image: "assets/character32.jpg"
+            },
+                {
+                id: 33,
+                name: "Дмитрий Карпов",
+                source: "Медиа",
+                comment: "гик всем гикам",
+                image: "assets/character33.jpg"
+            },
+                {
+                id: 34,
+                name: "Александр Леон Гумучян",
+                source: "bbno$",
+                comment: "крут",
+                image: "assets/character34.jpg"
+            },
+                {
+                id: 35,
+                name: "Леон Скотт Кеннеди",
+                source: "Resident evil",
+                comment: "симпотный чо",
+                image: "assets/character35.jpg"
+            },
+                {
+                id: 36,
+                name: "Тацума Юуши",
+                source: "Kko to yamioji",
+                comment: "фетиш.",
+                image: "assets/character36.jpg"
+            },
+                {
+                id: 37,
+                name: "Безглазый Джек",
+                source: "Крипипаста",
+                comment: "краш детства ряльна",
+                image: "assets/character37.jpg"
+            },
+                {
+                id: 38,
+                name: "Сал Фишер",
+                source: "Sally face",
+                comment: "бля ну он крутой",
+                image: "assets/character38.jpg"
+            },
+                {
+                id: 39,
+                name: "Сугуру Гето",
+                source: "Jujutsu kaisen",
+                comment: "нравится и все и че ",
+                image: "assets/character39.jpg"
+            },
+                {
+                id: 40,
+                name: "Шан Цзун",
+                source: "Mortal kombat 1",
+                comment: "он такой слей",
+                image: "assets/character40.jpg"
+            },
+                {
+                id: 41,
+                name: "Кэнси Такахаси",
+                source: "Mortal kombat 1",
+                comment: "ну а че",
+                image: "assets/character41.jpg"
+            },
+                {
+                id: 42,
+                name: "Гэвин Рид",
+                source: "Detroit: become human",
+                comment: "плохиш такой))))))",
+                image: "assets/character42.jpg"
+            },
+                {
+                id: 43,
+                name: "Смеющийся Джек",
+                source: "Крипипаста",
+                comment: "сорри пошел фетиш на клоунов...",
+                image: "assets/character43.jpg"
+            },
+                {
+                id: 44,
+                name: "Стюарт 2-D",
+                source: "Gorillaz",
+                comment: "хз ваще...",
+                image: "assets/character44.jpg"
+            },
+                {
+                id: 45,
+                name: "Пьеро",
+                source: "Приключения буратино 1975",
+                comment: "... очевидно должно быть ...",
+                image: "assets/character45.jpg"
+            },
+                {
+                id: 46,
+                name: "Борис Петров",
+                source: "Tiny bunny",
+                comment: "хе хехе",
+                image: "assets/character46.jpg"
+            },
+                {
+                id: 47,
+                name: "Илья Розанов",
+                source: "Жаркое соперничество",
+                comment: "бля ну",
+                image: "assets/character47.jpg"
+            },
+                {
+                id: 48,
+                name: "Даниил",
+                source: "Wh4t 1 w0uldnt d0",
+                comment: "фетиш. наверное..",
+                image: "assets/character48.jpg"
+            },
+                {
+                id: 49,
+                name: "Нуб Сайбот",
+                source: "Mortal kombat",
+                comment: "он чорни и может поделиться на два)",
+                image: "assets/character49.jpg"
+            },
+                {
+                id: 50,
+                name: "Аки Хаякава",
+                source: "Chainsaw Man",
+                comment: "он крут",
+                image: "assets/character50.jpg"
+            },
+                {
+                id: 51,
+                name: "Мидей",
+                source: "Honkai: star rail",
+                comment: "сиськи.......",
+                image: "assets/character51.jpg"
+            },
+                {
+                id: 52,
+                name: "Данила Горилла",
+                source: "Медиа",
+                comment: "КРЫСИНЫЙ КОРОЛЬ!!!1! ОН ВОВСЕ НЕ ГЕРОЙ!1!!!1!1",
+                image: "assets/character52.jpg"
+            },
+                {
+                id: 53,
+                name: "Соник 3D",
+                source: "Медиа",
+                comment: "люблю его пяточки)))",
+                image: "assets/character53.jpg"
+            },
+                {
+                id: 54,
+                name: "Арт",
+                source: "Ужасающий",
+                comment: "фетишшшшшшшшшшшшшш",
+                image: "assets/character54.jpg"
+            },
+                {
+                id: 55,
+                name: "Эндермен",
+                source: "Minecraft",
+                comment: "КАК ЖЕ ОН ПРЕКРАСЕН Я ТАК ЕГО ЛЮБЛЮ БОЖЕ ЭТИ ДЛИННЫЕ КОНЕЧНОСТИ И ЯРКИЕ КАК ЗВЕЗДЫ ГЛАЗА",
+                image: "assets/character55.jpg"
+            },
+                {
+                id: 56,
+                name: "Гохин",
+                source: "Beastars",
+                comment: "По на максималках",
+                image: "assets/character56.jpg"
+            },
+                {
+                id: 57,
+                name: "Элис Каллен",
+                source: "Сумерки",
+                comment: "она мили и у нее крутая прическа жиес",
+                image: "assets/character57.jpg"
+            },
+                {
+                id: 58,
+                name: "Смерть|Волк",
+                source: "Кот в сапогах",
+                comment: "я фуриеб",
+                image: "assets/character58.jpg"
+            },
+                {
+                id: 59,
+                name: "Frame Tamer",
+                source: "Медиа",
+                comment: "мега крутой чел",
+                image: "assets/character59.jpg"
+            },
+                {
+                id: 60,
+                name: "Виктор",
+                source: "Аркейн",
+                comment: "корнеплод",
+                image: "assets/character60.jpg"
+            },
+                {
+                id: 61,
+                name: "Рико",
+                source: "Мадагаскар",
+                comment: "бегите я ебанутый. лютый кинн",
+                image: "assets/character61.jpg"
+            },
+                {
+                id: 62,
+                name: "Тадаши Хамада",
+                source: "Город героев",
+                comment: "симпотный блин я плакала когда умер",
+                image: "assets/character62.jpg"
+            },
+                {
+                id: 63,
+                name: "Джейс",
+                source: "Аркейн",
+                comment: "ничо такой",
+                image: "assets/character63.jpg"
+            },
+                {
+                id: 64,
+                name: "Гого Томаго",
+                source: "Город героев",
+                comment: "я лесбиянка",
+                image: "assets/character64.jpg"
+            },
+                {
+                id: 65,
+                name: "Карлайл Каллен",
+                source: "Сумерки",
+                comment: "трусы насквозь",
+                image: "assets/character65.jpg"
+            },
+                {
+                id: 66,
+                name: "Роберт Паттинсон",
+                source: "Акрет",
+                comment: "крутой. и мемный. вдвойне крутой",
+                image: "assets/character66.jpg"
+            },
+                {
+                id: 67,
+                name: "Дмитрий Нагиев",
+                source: "Медиа",
+                comment: "люблю его разнообразие ролей",
+                image: "assets/character67.jpg"
+            },
+                {
+                id: 68,
+                name: "Стеб",
+                source: "Аркейн",
+                comment: "БОЖЕ КАКОЙ ОН КРАСИВЫЙ АААААААААААААААААААААААААААА",
+                image: "assets/character68.jpg"
+            },
+                {
+                id: 69,
+                name: "Херб Оверкилл",
+                source: "Миньоны",
+                comment: ")))))))))))))))))))))))))",
+                image: "assets/character69.jpg"
+            },
+                {
+                id: 70,
+                name: "Дракула",
+                source: "Монстры на каникулах",
+                comment: "да че тут говорить то",
+                image: "assets/character70.jpg"
+            },
+                {
+                id: 71,
+                name: "Кромешник",
+                source: "Хранители снов",
+                comment: "я его жена кста",
+                image: "assets/character71.jpg"
+            },
+                {
+                id: 72,
+                name: "Mr. Hood",
+                source: "homicipher",
+                comment: "у него нет лица +10000 к ауре",
+                image: "assets/character72.jpg"
+            },
+                {
+                id: 73,
+                name: "Петер",
+                source: "Реальные упыри",
+                comment: "тихо",
+                image: "assets/character73.jpg"
+            },
+                {
+                id: 74,
+                name: "Эдвард",
+                source: "Эдвард руки-ножницы",
+                comment: "он мили, люблю его",
+                image: "assets/character74.jpg"
+            },
+                {
+                id: 75,
+                name: "Перри-Утконос",
+                source: "Финес и Ферб",
+                comment: "он очень крут",
+                image: "assets/character75.jpg"
+            },
+                {
+                id: 76,
+                name: "Балдуин IV Иерусалимский",
+                source: "Царство небесное",
+                comment: "да ну и че",
+                image: "assets/character76.jpg"
+            },
+                {
+                id: 77,
+                name: "Иван Янковский",
+                source: "Актер",
+                comment: "нравятся проекты с ним",
+                image: "assets/character77.jpg"
+            },
+                {
+                id: 78,
+                name: "Пирамидоголовый ",
+                source: "Silent Hill",
+                comment: "секс",
+                image: "assets/character78.jpg"
+            },
+                {
+                id: 79,
+                name: "Бeззубик",
+                source: "Как приручить дракона",
+                comment: "ОН МИЛИИИИИ ;-;",
+                image: "assets/character79.jpg"
+            },
+                {
+                id: 80,
+                name: "Рерир",
+                source: "Genshin impact",
+                comment: "ну симпотяга ну",
+                image: "assets/character80.jpg"
+            }
+        ]
+
+let currentIndex = 0;
+let totalCharacters = characters.length;
+let isAnimating = false;
+
+// Инициализация галереи
+function initGallery() {
+    const container = document.getElementById('galleryContainer');
+    const counterTotal = document.getElementById('totalNumber');
+    
+    counterTotal.textContent = totalCharacters;
+    
+    // Создаем карточки
+    characters.forEach((character) => {
+        const card = document.createElement('div');
+        card.className = 'character-card';
+        card.id = `character-${character.id}`;
+        
+        card.innerHTML = `
+            <div class="character-image">
+                <img src="${character.image}" alt="${character.name}" onerror="this.src='https://images.unsplash.com/photo-1635805737707-575885ab0820?w=800&auto=format&fit=crop'">
+                <div class="image-overlay"></div>
+            </div>
+            <div class="character-info">
+                <h1 class="character-name">${character.name}</h1>
+                <span class="character-source">${character.source}</span>
+                <div class="character-comment">${character.comment}</div>
+            </div>
+        `;
+        
+        // Вставляем перед кнопками навигации
+        const navButtons = container.querySelector('.nav-buttons');
+        container.insertBefore(card, navButtons);
+        
+        // Изначально все карточки скрыты
+        card.style.opacity = '0';
+        card.style.transform = 'translate(-50%, -50%) scale(0.9)';
+        card.style.pointerEvents = 'none';
+    });
+}
+
+// Обновление прогресс-бара
+function updateProgressBar() {
+    const progress = ((currentIndex + 1) / totalCharacters) * 100;
+    const progressBar = document.getElementById('progressBar');
+    if (progressBar) {
+        progressBar.style.width = `${progress}%`;
+    }
+}
+
+// Показ первой карточки при запуске
+function showFirstCharacter() {
+    const firstCard = document.getElementById('character-1');
+    if (firstCard) {
+    
+        firstCard.style.opacity = '';
+        firstCard.style.transform = '';
+        firstCard.style.pointerEvents = '';
+        
+    
+        firstCard.classList.add('active');
+        
+        updateProgressBar();
+        document.getElementById('currentNumber').textContent = '1';
+    }
+}
+
+// Переключение персонажей
+function showCharacter(index, direction = 'right') {
+    if (isAnimating) return;
+    isAnimating = true;
+    
+ 
+    if (index < 0) index = totalCharacters - 1;
+    if (index >= totalCharacters) index = 0;
+    
+    const oldIndex = currentIndex;
+    currentIndex = index;
+    
+    const currentCard = document.getElementById(`character-${characters[oldIndex].id}`);
+    const nextCard = document.getElementById(`character-${characters[index].id}`);
+    
+    if (!currentCard || !nextCard) {
+        isAnimating = false;
+        return;
+    }
+    
+    
+    currentCard.classList.remove('slide-out-left', 'slide-out-right', 'active');
+    nextCard.classList.remove('slide-in-from-left', 'slide-in-from-right');
+    
+    // Анимация ухода текущей карточки
+    if (direction === 'right') {
+        currentCard.classList.add('slide-out-left');
+    } else {
+        currentCard.classList.add('slide-out-right');
+    }
+    
+    // Подготавливаем следующую карточку к показу
+    nextCard.style.opacity = '1';
+    nextCard.style.pointerEvents = 'all';
+    nextCard.style.transform = 'translate(-50%, -50%) scale(0.9)';
+    
+    // Анимация появления следующей карточки
+    setTimeout(() => {
+        if (direction === 'right') {
+            nextCard.classList.add('slide-in-from-right');
+        } else {
+            nextCard.classList.add('slide-in-from-left');
+        }
+        nextCard.classList.add('active');
+    }, 10);
+    
+    // Обновляем счетчик
+    document.getElementById('currentNumber').textContent = index + 1;
+    updateProgressBar();
+    
+    // Завершение анимации
+    setTimeout(() => {
+        currentCard.classList.remove('slide-out-left', 'slide-out-right', 'active');
+        nextCard.classList.remove('slide-in-from-left', 'slide-in-from-right');
+        
+        // Возвращаем стили для скрытой карточки
+        currentCard.style.opacity = '0';
+        currentCard.style.pointerEvents = 'none';
+        currentCard.style.transform = 'translate(-50%, -50%) scale(0.9)';
+        
+        // Оставляем активную карточку видимой
+        nextCard.style.opacity = '1';
+        nextCard.style.pointerEvents = 'all';
+        nextCard.style.transform = 'translate(-50%, -50%) scale(1)';
+        
+        isAnimating = false;
+    }, 800);
+}
+
+// Главный экран
+function initStartScreen() {
+    const startScreen = document.getElementById('startScreen');
+    const startButton = document.getElementById('startButton');
+    
+    if (!startScreen || !startButton) return;
+    
+    // Гарантируем, что стартовый экран виден
+    startScreen.style.display = 'flex';
+    
+    // Скрываем элементы галереи на старте
+    const counter = document.querySelector('.counter');
+    const progress = document.querySelector('.progress-container');
+    const navButtons = document.querySelector('.nav-buttons');
+    
+    if (counter) counter.style.opacity = '0';
+    if (progress) progress.style.opacity = '0';
+    if (navButtons) navButtons.style.opacity = '0';
+    
+    // Обработчик кнопки "Начать"
+    startButton.addEventListener('click', function() {
+        console.log('Кнопка "Начать" нажата!');
+        
+        // Скрываем главный экран
+        startScreen.classList.add('hidden');
+        
+        // Показываем элементы галереи
+        setTimeout(() => {
+            if (counter) counter.style.opacity = '1';
+            if (progress) progress.style.opacity = '1';
+            if (navButtons) navButtons.style.opacity = '1';
+            
+            // Показываем первого персонажа
+            showFirstCharacter();
+        }, 300);
+        
+        // Полностью убираем главный экран
+        setTimeout(() => {
+            startScreen.style.display = 'none';
+        }, 800);
+    });
+    
+    // Запуск по клавише пробела или Enter
+    document.addEventListener('keydown', (e) => {
+        if (e.code === 'Space' || e.code === 'Enter') {
+            if (!startScreen.classList.contains('hidden')) {
+                startButton.click();
+            }
+        }
+    });
+}
+
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('Документ загружен');
+    
+    initGallery();
+    initStartScreen();
+    
+    // Навигация кнопками
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    
+    if (prevBtn) {
+        prevBtn.addEventListener('click', () => {
+            console.log('Предыдущий');
+            showCharacter(currentIndex - 1, 'left');
+        });
+    }
+    
+    if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+            console.log('Следующий');
+            showCharacter(currentIndex + 1, 'right');
+        });
+    }
+    
+    // Управление клавиатурой
+    document.addEventListener('keydown', (e) => {
+        // Проверяем, что главный экран скрыт
+        const startScreen = document.getElementById('startScreen');
+        if (startScreen && !startScreen.classList.contains('hidden')) return;
+        
+        if (e.key === 'ArrowLeft') {
+            showCharacter(currentIndex - 1, 'left');
+        } else if (e.key === 'ArrowRight') {
+            showCharacter(currentIndex + 1, 'right');
+        }
+    });
+    
+    // Свайпы для мобильных устройств
+    let touchStartX = 0;
+    
+    document.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+    });
+    
+    document.addEventListener('touchend', (e) => {
+        // Проверяем, что главный экран скрыт
+        const startScreen = document.getElementById('startScreen');
+        if (startScreen && !startScreen.classList.contains('hidden')) return;
+        
+        const touchEndX = e.changedTouches[0].clientX;
+        const diff = touchStartX - touchEndX;
+        const swipeThreshold = 50;
+        
+        if (Math.abs(diff) > swipeThreshold) {
+            if (diff > 0) {
+                showCharacter(currentIndex + 1, 'right');
+            } else {
+                showCharacter(currentIndex - 1, 'left');
+            }
+        }
+    });
+});
+</script>
